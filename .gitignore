@@ -5,3 +5,4 @@ __pycache__/
 .env.*
 data/*
 !data/.gitkeep
+!data/task_dispatches.csv

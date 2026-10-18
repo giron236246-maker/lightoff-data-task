@@ -1,0 +1,2 @@
+# Preserve the supplied CSV byte-for-byte, including its original line endings.
+data/task_dispatches.csv -text

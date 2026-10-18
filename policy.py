@@ -30,6 +30,13 @@ def decide(cluster_name, node_free_vram, dispatch_time, status_synced_at,
     if cluster_name not in CLUSTERS:
         return GuardDecision("RECHECK", "unknown_cluster", None)
     try:
+        age_limit = float(age_threshold)
+        vram_limit = float(east_vram_threshold)
+        if not all(math.isfinite(value) and value >= 0 for value in [age_limit, vram_limit]):
+            raise ValueError("invalid threshold")
+    except (ValueError, TypeError, OverflowError):
+        return GuardDecision("RECHECK", "invalid_threshold", None)
+    try:
         vram = float(node_free_vram)
         at = datetime.fromisoformat(str(dispatch_time).replace("Z", "+00:00"))
         synced = datetime.fromisoformat(str(status_synced_at).replace("Z", "+00:00"))
@@ -40,8 +47,8 @@ def decide(cluster_name, node_free_vram, dispatch_time, status_synced_at,
             raise ValueError("invalid state")
     except (ValueError, TypeError, OverflowError):
         return GuardDecision("RECHECK", "invalid_state_or_timestamp", None)
-    if cluster_name == EAST and vram < east_vram_threshold:
+    if cluster_name == EAST and vram < vram_limit:
         return GuardDecision("RECHECK_AND_REROUTE", "east_low_vram", age)
-    if cluster_name != EAST and age > age_threshold:
+    if cluster_name != EAST and age > age_limit:
         return GuardDecision("RECHECK_AND_REROUTE", "stale_node_status", age)
     return GuardDecision("PASS", "no_selected_risk_signal", age)

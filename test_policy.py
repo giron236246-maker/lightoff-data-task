@@ -37,6 +37,15 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(self.decision(retry=2).action, "ESCALATE")
         self.assertEqual(self.decision(retry=-1).action, "RECHECK")
 
+    def test_invalid_thresholds_do_not_bypass_guard(self):
+        for name in ["age_threshold", "east_vram_threshold"]:
+            for value in [float("nan"), float("inf"), -1, None, "invalid"]:
+                with self.subTest(parameter=name, value=value):
+                    result = decide(EAST, 0, "2026-09-01T09:00:00+08:00",
+                                    "2026-09-01T00:00:00Z", **{name: value})
+                    self.assertEqual(result.action, "RECHECK")
+                    self.assertEqual(result.reason, "invalid_threshold")
+
 
 class SuppliedDataReconciliation(unittest.TestCase):
     def test_independent_stdlib_reconciliation(self):
